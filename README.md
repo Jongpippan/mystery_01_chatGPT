@@ -8,9 +8,7 @@
 
 정적 파일 서버에서 `index.html`을 여세요.
 
-```sh
-python -m http.server 8080
-```
+    python -m http.server 8080
 
 그 뒤 `http://localhost:8080`에 접속합니다.
 
@@ -34,11 +32,9 @@ python -m http.server 8080
 
 ## 검증
 
-```sh
-node tools/verify.mjs
-node tools/simulate.mjs
-node --check src/loader.js
-```
+    node tools/verify.mjs
+    node tools/simulate.mjs
+    node --check src/loader.js
 
 현재 기계 검증은 전체 106개 메인 장면, 52개 자료, 36개 추리, 42개 힌트를 확인하고 기본 완주 시뮬레이션이 엔딩까지 도달하는지 검사합니다.
 
