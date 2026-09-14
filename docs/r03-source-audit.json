@@ -1,0 +1,66 @@
+{
+  "all_match": false,
+  "source_commit": "c858a4e4d3300b5f0623af6dec1f23647c2f0f1a",
+  "files": {
+    "ch01.ko.md": {
+      "expected": "0aacf96ef699c73fd4a1ebfbb2dbe9ff48d266e3e0e4845fd916d3073035b817",
+      "actual": "6998f0fc14c85e9a635be62357ef4242bc6362602d299238970e38d08ceefa28",
+      "match": false,
+      "normalized_bytes": 144958
+    },
+    "ch02.ko.md": {
+      "expected": "a6130e62e34682160ed0920ffef59a4b05707eb59db2d68518fce2a251141862",
+      "actual": "9376d95adf1a55c415746f6932828c9b78264b077064de871a38a8f5483b5cbc",
+      "match": false,
+      "normalized_bytes": 117665
+    },
+    "ch03.ko.md": {
+      "expected": "2359543ba6ce5f100ebdd49ceeb06abce71401b72a1c3b2a360f2f4c8433e6e2",
+      "actual": "c4b2a726d3a0a3dd7bde20cc9eaa47b81098b963e01f79a6d9d83ca913f9f20d",
+      "match": false,
+      "normalized_bytes": 92369
+    },
+    "ch04.ko.md": {
+      "expected": "32c202fc272cd96997a3446e77688712f506b0e827596fc34f72daf9204b6ed3",
+      "actual": "b66c0c4bc741d273dfb198216772a5669f3b2220df7dca6852c2a14545aac855",
+      "match": false,
+      "normalized_bytes": 71761
+    },
+    "ch05.ko.md": {
+      "expected": "fd92460946cf712e539ac889788d535b795d2f123b6d03ab86c399cc6abfc55d",
+      "actual": "5ea5228f605e62108c72f3962031dbdbd13b21aa6e90969c31375d7aa82a1741",
+      "match": false,
+      "normalized_bytes": 72402
+    },
+    "ch06.ko.md": {
+      "expected": "6855b9dac19c0581ee4a77ff4445325eb2d7f104c858ec57ee98138981d5500a",
+      "actual": "7866fcff0e226e95cebdbf7ebdf847da08155a4e753f7ca86a4ec99f9848a7b4",
+      "match": false,
+      "normalized_bytes": 101584
+    },
+    "ep.ko.md": {
+      "expected": "a9a73c8ceb97e7ffaa58764feafbdf7c44154e66311739483aae119ceb64ee18",
+      "actual": "6f9d69cba618f905cfb024a017f814da98202d5a4e5b47626828bc300cdaa670",
+      "match": false,
+      "normalized_bytes": 28090
+    },
+    "pr-rest.ko.md": {
+      "expected": "8f9cd73033ec5b393e7f56069b45a4bf14c92e8e726b6a8bee975585f69031ff",
+      "actual": "5153cd1a23a3fd5de31e85127f3851840b489014fb6ccd0eb7309df845d2db6a",
+      "match": false,
+      "normalized_bytes": 77051
+    },
+    "sys.ko.md": {
+      "expected": "e7c8a3cfe0b7e321120449d29f9288945d573248c9744d3a6d4950b07f7f9dc9",
+      "actual": "db4e302d49c5b7ea3b50c4e1ee9607aa5e92e20157ecc0b2bd6edd75e8d2e054",
+      "match": false,
+      "normalized_bytes": 22120
+    },
+    "pr-b01.ko.md": {
+      "expected": "fa68fb03126949332878567a521044667129b99a340ee4b2d1c727fa44fead45",
+      "actual": "fa68fb03126949332878567a521044667129b99a340ee4b2d1c727fa44fead45",
+      "match": true,
+      "normalized_bytes": 22662
+    }
+  }
+}
