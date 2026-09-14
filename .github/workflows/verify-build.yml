@@ -1,0 +1,60 @@
+name: Verify playable build
+
+on:
+  push:
+    branches: [release-candidate, main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify packed screenplay and runtime
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const vm = require('vm');
+          const zlib = require('zlib');
+          const crypto = require('crypto');
+          const sandbox = { window: {} };
+          vm.createContext(sandbox);
+          const run = p => vm.runInContext(fs.readFileSync(p, 'utf8'), sandbox, { filename: p });
+          for (let i=1;i<=12;i++) {
+            run(`src/data/part${String(i).padStart(2,'0')}.js`);
+            if (i===4 || i===8) run(`src/data/part${String(i).padStart(2,'0')}b.js`);
+          }
+          for (let i=1;i<=9;i++) run(`src/data-tail/tail${String(i).padStart(2,'0')}.js`);
+          for (let i=10;i<=23;i++) { run(`src/data-tail-safe/tail${i}a.js`); run(`src/data-tail-safe/tail${i}b.js`); }
+          if (sandbox.window.YEOWUL_PACK_PARTS.length !== 51) throw new Error('data part count');
+          const jsonBuf = zlib.gunzipSync(Buffer.from(sandbox.window.YEOWUL_PACK_PARTS.join(''), 'base64'));
+          const sha = crypto.createHash('sha256').update(jsonBuf).digest('hex');
+          if (sha !== '259f56f4fb455cd35a80d917cace8074a0c1bf791974b9566fff603e4d52b8d5') throw new Error(`data sha ${sha}`);
+          const d = JSON.parse(jsonBuf.toString('utf8'));
+          const checks = [
+            [d.meta.revision === 'r03','revision'],
+            [d.meta.acceptedOpeningSha256 === 'fa68fb03126949332878567a521044667129b99a340ee4b2d1c727fa44fead45','opening'],
+            [d.scenes.length === 106,'scenes'],
+            [d.optionalScenes.length === 18,'optional'],
+            [Object.keys(d.evidence).length === 52,'evidence'],
+            [Object.keys(d.people).length === 10,'people'],
+            [Object.keys(d.hints).length === 42,'hints'],
+            [d.scenes.filter(x=>x.type==='challenge').length === 36,'challenges']
+          ];
+          for (const [ok,name] of checks) if (!ok) throw new Error(name);
+          const runtime = { window: {} };
+          vm.createContext(runtime);
+          for (let i=1;i<=6;i++) vm.runInContext(fs.readFileSync(`src/runtime-safe/part${String(i).padStart(2,'0')}.js`,'utf8'), runtime);
+          if (runtime.window.YEOWUL_GAME_PACK_PARTS.length !== 6) throw new Error('runtime part count');
+          const game = zlib.gunzipSync(Buffer.from(runtime.window.YEOWUL_GAME_PACK_PARTS.join(''), 'base64'));
+          const gameSha = crypto.createHash('sha256').update(game).digest('hex');
+          if (gameSha !== '7abec60dd0ae7a54a76317d27f3bb726c2459db33406cd64311cc9dee8ef00a3') throw new Error(`runtime sha ${gameSha}`);
+          new vm.Script(game.toString('utf8'), { filename: 'game.js' });
+          const html = fs.readFileSync('index.html','utf8');
+          const bootstrap = fs.readFileSync('src/bootstrap.js','utf8');
+          for (const required of ['src/bootstrap.js','enhancements.css']) if (!html.includes(required)) throw new Error(`index missing ${required}`);
+          for (const required of ['src/data-tail-safe/tail23b.js','src/runtime-safe/part06.js','src/loader.js']) if (!bootstrap.includes(required)) throw new Error(`bootstrap missing ${required}`);
+          console.log(JSON.stringify({revision:d.meta.revision, scenes:d.scenes.length, optional:d.optionalScenes.length, evidence:Object.keys(d.evidence).length, challenges:d.scenes.filter(x=>x.type==='challenge').length, dataSha:sha, runtimeSha:gameSha}, null, 2));
+          NODE

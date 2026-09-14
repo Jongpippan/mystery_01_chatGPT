@@ -27,7 +27,7 @@ named error routes: 71
 correct claim routes: 38
 persistent choices: 5
 schematic routes: 8
-content pack files: 1
+local verifier pack parts: 37 (unsplit local verification layout)
 ```
 
 The verifier additionally checks the accepted-opening SHA-256, E01–E52 reachability, D01–D30 and Q01–Q06 presence, unique scene IDs, two valid Q01 proof routes, two valid D30 presentation orders, persistent branch extraction, and the PR12 local response.
@@ -52,7 +52,9 @@ B_EXHIBIT = attributed_accounts
 B_SOUND = environment_only
 ```
 
-The runtime gzip pack was regenerated from the checked `src/game.js` and decompressed byte-for-byte back to the same source during packaging.
+The deploy data layout was separately reconstructed from 51 script pieces and matched the complete packed base64 payload byte-for-byte. The decompressed JSON SHA-256 is `259f56f4fb455cd35a80d917cace8074a0c1bf791974b9566fff603e4d52b8d5`.
+
+The deploy runtime uses 6 safe script pieces. Their joined gzip payload decompresses byte-for-byte to the checked `src/game.js`; SHA-256 is `7abec60dd0ae7a54a76317d27f3bb726c2459db33406cd64311cc9dee8ef00a3`.
 
 ## Implemented but not independently validated here
 
@@ -68,3 +70,8 @@ An attempt to run the local build in the available managed Chromium environment 
 ## Independent first play
 
 G4-style independent first play is **unverified**. No unfamiliar human player has yet supplied timing, hypothesis, error/recovery, hint-use, character-memory, or confusion observations. Automated simulation is not counted as independent play evidence.
+
+
+## Remote release verification
+
+The repository includes `.github/workflows/verify-build.yml`. On the `release-candidate` and `main` branches it reconstructs the packed screenplay and runtime, checks both SHA-256 values, parses the r03 JSON, checks key content counts, compiles the decompressed runtime with `vm.Script`, and verifies that `index.html` references the final safe payload files.
