@@ -1,1 +1,0 @@
-Trigger remote verification for the completed YEOWUL r03 playable build.
