@@ -1,0 +1,65 @@
+name: Audit r03 screenplay source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/audit-r03-source.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target
+        uses: actions/checkout@v4
+        with:
+          path: target
+      - name: Checkout source project
+        uses: actions/checkout@v4
+        with:
+          repository: Jongpippan/mystery
+          ref: main
+          path: source
+      - name: Compare normalized screenplay hashes
+        shell: python
+        run: |
+          from pathlib import Path
+          import hashlib, json
+
+          expected = {
+            'ch01.ko.md': '0aacf96ef699c73fd4a1ebfbb2dbe9ff48d266e3e0e4845fd916d3073035b817',
+            'ch02.ko.md': 'a6130e62e34682160ed0920ffef59a4b05707eb59db2d68518fce2a251141862',
+            'ch03.ko.md': '2359543ba6ce5f100ebdd49ceeb06abce71401b72a1c3b2a360f2f4c8433e6e2',
+            'ch04.ko.md': '32c202fc272cd96997a3446e77688712f506b0e827596fc34f72daf9204b6ed3',
+            'ch05.ko.md': 'fd92460946cf712e539ac889788d535b795d2f123b6d03ab86c399cc6abfc55d',
+            'ch06.ko.md': '6855b9dac19c0581ee4a77ff4445325eb2d7f104c858ec57ee98138981d5500a',
+            'ep.ko.md': 'a9a73c8ceb97e7ffaa58764feafbdf7c44154e66311739483aae119ceb64ee18',
+            'pr-rest.ko.md': '8f9cd73033ec5b393e7f56069b45a4bf14c92e8e726b6a8bee975585f69031ff',
+            'sys.ko.md': 'e7c8a3cfe0b7e321120449d29f9288945d573248c9744d3a6d4950b07f7f9dc9',
+            'pr-b01.ko.md': 'fa68fb03126949332878567a521044667129b99a340ee4b2d1c727fa44fead45',
+          }
+          root = Path('source/project_01/game/content/source')
+          result = {}
+          ok = True
+          for name, want in expected.items():
+            raw = (root / name).read_bytes().replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+            got = hashlib.sha256(raw).hexdigest()
+            result[name] = {'expected': want, 'actual': got, 'match': got == want, 'normalized_bytes': len(raw)}
+            ok &= got == want
+          out = Path('target/docs/r03-source-audit.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps({'all_match': ok, 'files': result}, ensure_ascii=False, indent=2) + '\n')
+          if not ok:
+            raise SystemExit('Source repository screenplay does not match the supplied r03 baseline.')
+      - name: Commit audit result
+        working-directory: target
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/r03-source-audit.json
+          git commit -m 'chore: verify r03 screenplay source' || exit 0
+          git push
