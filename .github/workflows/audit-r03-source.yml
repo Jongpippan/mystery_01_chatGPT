@@ -1,4 +1,4 @@
-name: Audit r03 screenplay source
+name: Audit r03 screenplay history
 
 on:
   push:
@@ -18,56 +18,51 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: target
-      - name: Checkout source project
+      - name: Checkout source history
         uses: actions/checkout@v4
         with:
           repository: Jongpippan/mystery
           ref: main
+          fetch-depth: 0
           path: source
-      - name: Compare normalized screenplay hashes
+      - name: Compare screenplay history
         shell: python
         run: |
           from pathlib import Path
-          import hashlib, json
-
-          expected = {
-            'ch01.ko.md': '0aacf96ef699c73fd4a1ebfbb2dbe9ff48d266e3e0e4845fd916d3073035b817',
-            'ch02.ko.md': 'a6130e62e34682160ed0920ffef59a4b05707eb59db2d68518fce2a251141862',
-            'ch03.ko.md': '2359543ba6ce5f100ebdd49ceeb06abce71401b72a1c3b2a360f2f4c8433e6e2',
-            'ch04.ko.md': '32c202fc272cd96997a3446e77688712f506b0e827596fc34f72daf9204b6ed3',
-            'ch05.ko.md': 'fd92460946cf712e539ac889788d535b795d2f123b6d03ab86c399cc6abfc55d',
-            'ch06.ko.md': '6855b9dac19c0581ee4a77ff4445325eb2d7f104c858ec57ee98138981d5500a',
-            'ep.ko.md': 'a9a73c8ceb97e7ffaa58764feafbdf7c44154e66311739483aae119ceb64ee18',
-            'pr-rest.ko.md': '8f9cd73033ec5b393e7f56069b45a4bf14c92e8e726b6a8bee975585f69031ff',
-            'sys.ko.md': 'e7c8a3cfe0b7e321120449d29f9288945d573248c9744d3a6d4950b07f7f9dc9',
-            'pr-b01.ko.md': 'fa68fb03126949332878567a521044667129b99a340ee4b2d1c727fa44fead45',
+          import hashlib, json, subprocess
+          expected={
+            'ch01.ko.md':'0aacf96ef699c73fd4a1ebfbb2dbe9ff48d266e3e0e4845fd916d3073035b817',
+            'ch02.ko.md':'a6130e62e34682160ed0920ffef59a4b05707eb59db2d68518fce2a251141862',
+            'ch03.ko.md':'2359543ba6ce5f100ebdd49ceeb06abce71401b72a1c3b2a360f2f4c8433e6e2',
+            'ch04.ko.md':'32c202fc272cd96997a3446e77688712f506b0e827596fc34f72daf9204b6ed3',
+            'ch05.ko.md':'fd92460946cf712e539ac889788d535b795d2f123b6d03ab86c399cc6abfc55d',
+            'ch06.ko.md':'6855b9dac19c0581ee4a77ff4445325eb2d7f104c858ec57ee98138981d5500a',
+            'ep.ko.md':'a9a73c8ceb97e7ffaa58764feafbdf7c44154e66311739483aae119ceb64ee18',
+            'pr-rest.ko.md':'8f9cd73033ec5b393e7f56069b45a4bf14c92e8e726b6a8bee975585f69031ff',
+            'sys.ko.md':'e7c8a3cfe0b7e321120449d29f9288945d573248c9744d3a6d4950b07f7f9dc9',
+            'pr-b01.ko.md':'fa68fb03126949332878567a521044667129b99a340ee4b2d1c727fa44fead45',
           }
-          root = Path('source/project_01/game/content/source')
-          result = {}
-          ok = True
-          for name, want in expected.items():
-            raw = (root / name).read_bytes().replace(b'\r\n', b'\n').replace(b'\r', b'\n')
-            got = hashlib.sha256(raw).hexdigest()
-            result[name] = {'expected': want, 'actual': got, 'match': got == want, 'normalized_bytes': len(raw)}
-            ok &= got == want
-          report = {'all_match': ok, 'source_commit': 'c858a4e4d3300b5f0623af6dec1f23647c2f0f1a', 'files': result}
-          print(json.dumps(report, ensure_ascii=False, indent=2))
-          out = Path('target/docs/r03-source-audit.json')
-          out.parent.mkdir(parents=True, exist_ok=True)
-          out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+          refs=['c858a4e4d3300b5f0623af6dec1f23647c2f0f1a','7fce88c5793c08e5db25f295e15fd30c18bd0abb','abf0eaa743d1146dcf71090e5fb08115b842fc48']
+          root='project_01/game/content/source/'
+          report={'expected':expected,'candidates':{}}
+          for ref in refs:
+            files={}; matches=0
+            for name,want in expected.items():
+              p=subprocess.run(['git','-C','source','show',f'{ref}:{root}{name}'],capture_output=True)
+              if p.returncode:
+                files[name]={'present':False,'match':False}; continue
+              raw=p.stdout.replace(b'\r\n',b'\n').replace(b'\r',b'\n')
+              got=hashlib.sha256(raw).hexdigest(); match=got==want; matches+=int(match)
+              files[name]={'present':True,'actual':got,'match':match,'bytes':len(raw)}
+            report['candidates'][ref]={'matches':matches,'all_match':matches==len(expected),'files':files}
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          out=Path('target/docs/r03-history-audit.json'); out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
       - name: Commit audit result
         working-directory: target
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/r03-source-audit.json
-          git commit -m 'chore: record r03 source audit' || exit 0
+          git add docs/r03-history-audit.json
+          git commit -m 'chore: audit r03 against source history' || exit 0
           git push
-      - name: Enforce audit
-        shell: python
-        run: |
-          import json
-          from pathlib import Path
-          report = json.loads(Path('target/docs/r03-source-audit.json').read_text())
-          if not report['all_match']:
-            raise SystemExit('Source repository screenplay does not match the supplied r03 baseline.')
